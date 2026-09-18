@@ -29,25 +29,22 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create environment configuration
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Prepare Secrets and Environment
         run: |
           if [ ! -f .env ]; then
             cp .env.example .env
           fi
-
-      - name: Grant execute permission for Gradle wrapper
-        run: |
-          if [ -f gradlew ]; then
-            chmod +x gradlew
+          if [ -f debug.keystore.base64 ] && [ ! -f debug.keystore ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
           fi
 
-      - name: Build Debug APK with Gradle
-        run: |
-          if [ -f gradlew ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            gradle assembleDebug --stacktrace
-          fi
+      - name: Build Debug APK
+        run: gradle :app:assembleDebug --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
@@ -56,24 +53,18 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
 
-      - name: Create Release and Upload APK (on push or manual trigger)
+      - name: Create GitHub Release with APK
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: "BASOKA v1.0.${{ github.run_number }}"
+          name: "BASOKA Android App v1.0.${{ github.run_number }}"
           body: |
-            ## BASOKA - Kurdish AI Assistant 🚀
-            وەشانی فەرمی ئەپڵیکەیشنی BASOKA بە زمانی کوردی.
+            ## BASOKA - AI Assistant (کوردستان) 🚀
+            وەشانی فەرمیی ئەپڵیکەیشنی BASOKA بە فۆرماتی APK بۆ مۆبایلەکانی ئەندرۆید.
 
-            ### تایبەتمەندییەکان:
-            - یاریدەدەری زیرەک بە زمانی کوردیی سۆرانی (Kurdish NLP).
-            - دروستکردن و شیکارکردنی وێنە بە ژیری دەستکرد (AI Image Generation).
-            - تایمەر، زەنگ، بیرخستنەوە و بەڕێوەبردنی کارەکان.
-            - کورتکردنەوە و شیکردنەوەی فایل و بەڵگەنامەکان.
-            - پاراستنی تەواوی داتاکان لە ناوخۆی مۆبایل (Offline First).
-
-            **فایلی APK لە خوارەوە دابەزێنە و لەسەر مۆبایلەکەت دایمەزرێنە.**
+            ### فایلی دابەزاندن:
+            دەتوانیت لە خوارەوە لە بەشی **Assets** فایلی `app-debug.apk` ڕاستەوخۆ دابەزێنیتە ناو مۆبایلەکەت و دایمەزرێنیت.
           files: app/build/outputs/apk/debug/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
