@@ -1,0 +1,6 @@
+{
+  "name": "BASOKA",
+  "description": "یاریدەدەری زیرەکی دەستکردی کەسی BASOKA بۆ جێبەجێکردنی ئەرکەکان، کات، فایل، نووسین و ئۆتۆماتیک بە زمانی کوردی",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

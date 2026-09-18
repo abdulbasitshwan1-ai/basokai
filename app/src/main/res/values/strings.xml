@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">BASOKA</string>
+    <string name="philosophy">سادە لە دەرەوە، زۆر بەهێز لە ناوەوە</string>
+    <string name="welcome_greeting">سڵاو 👋 من BASOKA ـم.</string>
+    <string name="welcome_prompt">چ شتێکت بۆ بکەم؟</string>
+    <string name="chat_hint">لێرە بنووسە...</string>
+</resources>
