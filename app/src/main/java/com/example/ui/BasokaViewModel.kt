@@ -16,6 +16,7 @@ import com.example.data.model.MessageSender
 import com.example.data.model.TaskEntity
 import com.example.data.model.TaskType
 import com.example.data.repository.BasokaRepository
+import com.example.ui.components.KurdishTtsManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,8 @@ class BasokaViewModel(application: Application) : AndroidViewModel(application) 
     private val repository = BasokaRepository(application)
     private val deviceController = DeviceController(application)
     private val geminiService = GeminiService()
+    val ttsManager = KurdishTtsManager(application)
+    val isSpeaking: StateFlow<Boolean> = ttsManager.isSpeaking
 
     // 1. Navigation tab index (0: چات, 1: تواناکان, 2: کارەکان, 3: فایلەکان, 4: ڕێکخستنەکان)
     private val _currentTab = MutableStateFlow(0)
@@ -475,5 +478,19 @@ class BasokaViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.clearChat()
         }
+    }
+
+    fun speakText(text: String) {
+        ttsManager.speak(text)
+    }
+
+    fun stopSpeaking() {
+        ttsManager.stop()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsManager.shutdown()
+        timerJob?.cancel()
     }
 }

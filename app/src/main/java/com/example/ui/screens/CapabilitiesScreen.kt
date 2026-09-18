@@ -38,10 +38,27 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,11 +67,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ai.KurdishCultureUtils
+import com.example.ai.KurdishTranslatorService
 import com.example.ui.BasokaViewModel
 import com.example.ui.theme.BasokaBlack
 import com.example.ui.theme.BasokaPrimary
@@ -79,6 +99,11 @@ fun CapabilitiesScreen(
     onSelectPrompt: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showTranslatorDialog by remember { mutableStateOf(false) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
+    var showDictionaryDialog by remember { mutableStateOf(false) }
+    var showQuickAiToolsDialog by remember { mutableStateOf(false) }
+
     val modules = remember {
         listOf(
             CapabilityModule(
@@ -262,6 +287,105 @@ fun CapabilitiesScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Quick Access Interactive Tools Row
+            Text(
+                text = "ئامرازە ئامادەکراوەکانی ژیری دەستکرد و بەردەست بە ئۆفلاین:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = BasokaPrimary,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Multi-Dialect Translator
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showTranslatorDialog = true },
+                    color = BasokaSurfaceElevated,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BasokaSurfaceBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Translate, contentDescription = null, tint = BasokaPrimary, modifier = Modifier.size(26.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("وەرگێڕی دیالێکت", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = BasokaTextPrimary)
+                    }
+                }
+
+                // AI Ready Tools (Email, CV, Summary)
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showQuickAiToolsDialog = true },
+                    color = BasokaSurfaceElevated,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BasokaSurfaceBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = BasokaSecondary, modifier = Modifier.size(26.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("ئامرازی AI خێرا", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = BasokaTextPrimary)
+                    }
+                }
+
+                // Offline Kurdish Calendar & Occasions
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showCalendarDialog = true },
+                    color = BasokaSurfaceElevated,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BasokaSurfaceBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = BasokaPrimary, modifier = Modifier.size(26.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("ڕۆژژمێری کوردی", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = BasokaTextPrimary)
+                    }
+                }
+
+                // Offline Kurdish Dictionary
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showDictionaryDialog = true },
+                    color = BasokaSurfaceElevated,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BasokaSurfaceBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.MenuBook, contentDescription = null, tint = BasokaSecondary, modifier = Modifier.size(26.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("فەرهەنگی ئۆفلاین", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = BasokaTextPrimary)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+            Text(
+                text = "کەتەلۆگی توانستە سەرەکییەکان:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = BasokaTextPrimary,
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
         }
 
         items(modules) { module ->
@@ -273,6 +397,42 @@ fun CapabilitiesScreen(
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
+
+    // 1. Multi-Dialect Translator Dialog
+    if (showTranslatorDialog) {
+        MultiDialectTranslatorDialog(
+            onDismiss = { showTranslatorDialog = false },
+            onSendToChat = { prompt ->
+                showTranslatorDialog = false
+                onSelectPrompt(prompt)
+            }
+        )
+    }
+
+    // 2. Quick AI Tools Dialog (Email, CV, Summary)
+    if (showQuickAiToolsDialog) {
+        QuickAiToolsDialog(
+            onDismiss = { showQuickAiToolsDialog = false },
+            onSendToChat = { prompt ->
+                showQuickAiToolsDialog = false
+                onSelectPrompt(prompt)
+            }
+        )
+    }
+
+    // 3. Offline Kurdish Calendar Dialog
+    if (showCalendarDialog) {
+        KurdishCalendarDialog(
+            onDismiss = { showCalendarDialog = false }
+        )
+    }
+
+    // 4. Offline Kurdish Tech Dictionary Dialog
+    if (showDictionaryDialog) {
+        KurdishDictionaryDialog(
+            onDismiss = { showDictionaryDialog = false }
+        )
     }
 }
 
@@ -384,4 +544,356 @@ fun CapabilityModuleItem(
             }
         }
     }
+}
+
+// 1. Multi-Dialect Translator Dialog
+@Composable
+fun MultiDialectTranslatorDialog(
+    onDismiss: () -> Unit,
+    onSendToChat: (String) -> Unit
+) {
+    var sourceText by remember { mutableStateOf("") }
+    var fromDialect by remember { mutableStateOf("سۆرانی") }
+    var toDialect by remember { mutableStateOf("بادینی") }
+    var translatedResult by remember { mutableStateOf("") }
+    var grammarTips by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BasokaSurface,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Translate, contentDescription = null, tint = BasokaPrimary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("وەرگێڕی شێوەزارەکانی کوردی", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = BasokaTextPrimary)
+            }
+        },
+        text = {
+            Column {
+                Text("دەق بنووسە بۆ وەرگێڕانی نێوان دیالێکتەکانی زمانی کوردی:", fontSize = 12.sp, color = BasokaTextSecondary)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("لە: $fromDialect", fontSize = 12.sp, color = BasokaPrimary, fontWeight = FontWeight.Bold)
+                    Button(
+                        onClick = {
+                            val temp = fromDialect
+                            fromDialect = toDialect
+                            toDialect = temp
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = BasokaSurfaceElevated),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text("گۆڕین ⇄", fontSize = 11.sp, color = BasokaTextPrimary)
+                    }
+                    Text("بۆ: $toDialect", fontSize = 12.sp, color = BasokaSecondary, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = sourceText,
+                    onValueChange = {
+                        sourceText = it
+                        if (it.isNotBlank()) {
+                            translatedResult = KurdishTranslatorService.translateDialect(it, fromDialect, toDialect)
+                            grammarTips = KurdishTranslatorService.checkKurdishGrammar(it)
+                        } else {
+                            translatedResult = ""
+                            grammarTips = emptyList()
+                        }
+                    },
+                    placeholder = { Text("دەق لێرە بنووسە (وەک: چۆنی، ئەڤرۆ، باشم)...", fontSize = 13.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BasokaPrimary,
+                        unfocusedBorderColor = BasokaSurfaceBorder
+                    ),
+                    maxLines = 3
+                )
+
+                if (translatedResult.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = BasokaSurfaceElevated,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text("ئەنجامی وەرگێڕان:", fontSize = 11.sp, color = BasokaPrimary, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(translatedResult, fontSize = 14.sp, color = BasokaTextPrimary, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+
+                if (grammarTips.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("تێبینیی ڕێنووس:", fontSize = 11.sp, color = BasokaSecondary, fontWeight = FontWeight.Bold)
+                    grammarTips.forEach { tip ->
+                        Text("• $tip", fontSize = 11.sp, color = BasokaTextSecondary)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (sourceText.isNotBlank()) {
+                        onSendToChat("ئەم دەقەم بۆ وەرگێڕە لە $fromDialect بۆ $toDialect و ڕێنووسەکەی شی بکەرەوە:\n$sourceText")
+                    } else {
+                        onDismiss()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = BasokaPrimary)
+            ) {
+                Text(if (sourceText.isNotBlank()) "ناردن بۆ چاتی AI" else "داخستن")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("داخستن", color = BasokaTextSecondary)
+            }
+        }
+    )
+}
+
+// 2. Quick AI Tools Dialog (Email, CV, Summary)
+@Composable
+fun QuickAiToolsDialog(
+    onDismiss: () -> Unit,
+    onSendToChat: (String) -> Unit
+) {
+    var selectedTool by remember { mutableStateOf(0) }
+    val toolTitles = listOf("نووسینی ئیمەیڵ", "دروستکردنی CV", "کورتکردنەوە")
+    var inputDetail by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BasokaSurface,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = BasokaSecondary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("ئامرازە ئامادەکراوەکانی ژیری دەستکرد", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = BasokaTextPrimary)
+            }
+        },
+        text = {
+            Column {
+                TabRow(
+                    selectedTabIndex = selectedTool,
+                    containerColor = BasokaSurfaceElevated,
+                    contentColor = BasokaPrimary,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTool]),
+                            color = BasokaPrimary
+                        )
+                    }
+                ) {
+                    toolTitles.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTool == index,
+                            onClick = { selectedTool = index },
+                            text = { Text(title, fontSize = 11.sp, maxLines = 1) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                when (selectedTool) {
+                    0 -> {
+                        Text("بابەتی ئیمەیڵەکە یان داواکارییەکەت چییە؟", fontSize = 12.sp, color = BasokaTextSecondary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = inputDetail,
+                            onValueChange = { inputDetail = it },
+                            placeholder = { Text("وەک: داوای مۆڵەتی پشوودان لە بەڕێوەبەر بۆ دوو ڕۆژ", fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 3
+                        )
+                    }
+                    1 -> {
+                        Text("پیشە و تایبەتمەندییە سەرەکییەکانت چییە بۆ CV؟", fontSize = 12.sp, color = BasokaTextSecondary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = inputDetail,
+                            onValueChange = { inputDetail = it },
+                            placeholder = { Text("وەک: پەرەپێدەری ئەندرۆید، ٢ ساڵ ئەزموون لە کۆتلین و Jetpack Compose", fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 3
+                        )
+                    }
+                    2 -> {
+                        Text("دەقی درێژ دابنێ بۆ کورتکردنەوەی پڕۆفیشناڵ:", fontSize = 12.sp, color = BasokaTextSecondary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = inputDetail,
+                            onValueChange = { inputDetail = it },
+                            placeholder = { Text("دەق لێرە دابنێ...", fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 4
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val prompt = when (selectedTool) {
+                        0 -> "ئیمەیڵێکی فەرمی و جوانم بۆ بنووسە بە کوردی سەبارەت بە: ${inputDetail.ifEmpty { "داوای کارکردن لە کۆمپانیا" }}"
+                        1 -> "سیڤییەکی (CV) ستاندارد و پڕۆفیشناڵم بۆ دابڕێژە بەم زانیارییانە: ${inputDetail.ifEmpty { "پەرەپێدەری سۆفتوێر" }}"
+                        else -> "ئەم دەقەم بۆ کورت بکەرەوە بە کوردی لە ٥ خاڵی گرنگدا:\n$inputDetail"
+                    }
+                    onSendToChat(prompt)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = BasokaPrimary)
+            ) {
+                Text("دروستکردن بە AI")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("داخستن", color = BasokaTextSecondary)
+            }
+        }
+    )
+}
+
+// 3. Offline Kurdish Calendar & Occasions Dialog
+@Composable
+fun KurdishCalendarDialog(onDismiss: () -> Unit) {
+    val info = remember { KurdishCultureUtils.getTodayKurdishInfo() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BasokaSurface,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = BasokaPrimary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("ڕۆژژمێری کوردی و کاتەکانی بانگ", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = BasokaTextPrimary)
+            }
+        },
+        text = {
+            Column {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = BasokaSurfaceElevated,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("ڕۆژژمێری کوردی:", fontSize = 11.sp, color = BasokaPrimary, fontWeight = FontWeight.Bold)
+                        Text(info.kurdishDate, fontSize = 14.sp, color = BasokaTextPrimary, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(info.gregorianDate, fontSize = 12.sp, color = BasokaTextSecondary)
+                        Text(info.hijriDate, fontSize = 12.sp, color = BasokaTextSecondary)
+                    }
+                }
+
+                if (info.specialOccasion != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = BasokaPrimary.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(info.specialOccasion, fontSize = 12.sp, color = BasokaPrimary, modifier = Modifier.padding(8.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("کاتەکانی بانگ (کوردستان):", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BasokaTextPrimary)
+                Spacer(modifier = Modifier.height(6.dp))
+
+                info.prayerTimes.forEach { (name, time) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(name, fontSize = 12.sp, color = BasokaTextSecondary)
+                        Text(time, fontSize = 12.sp, color = BasokaSecondary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = BasokaPrimary)
+            ) {
+                Text("داخستن")
+            }
+        }
+    )
+}
+
+// 4. Offline Kurdish Tech Dictionary Dialog
+@Composable
+fun KurdishDictionaryDialog(onDismiss: () -> Unit) {
+    var searchWord by remember { mutableStateOf("") }
+    val words = KurdishCultureUtils.offlineDictionary.filter {
+        it.first.contains(searchWord, ignoreCase = true) || it.second.contains(searchWord, ignoreCase = true)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BasokaSurface,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.MenuBook, contentDescription = null, tint = BasokaSecondary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("فەرهەنگی تەکنەلۆژیی کوردی (ئۆفلاین)", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = BasokaTextPrimary)
+            }
+        },
+        text = {
+            Column(modifier = Modifier.height(320.dp)) {
+                OutlinedTextField(
+                    value = searchWord,
+                    onValueChange = { searchWord = it },
+                    placeholder = { Text("گەڕان بە ئینگلیزی یان کوردی...", fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(words) { (en, ku) ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            color = BasokaSurfaceElevated,
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(en, fontSize = 12.sp, color = BasokaPrimary, fontWeight = FontWeight.Bold)
+                                Text(ku, fontSize = 13.sp, color = BasokaTextPrimary)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = BasokaPrimary)
+            ) {
+                Text("داخستن")
+            }
+        }
+    )
 }

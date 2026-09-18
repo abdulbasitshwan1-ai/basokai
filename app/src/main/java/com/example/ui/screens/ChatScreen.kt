@@ -1,6 +1,9 @@
 package com.example.ui.screens
 
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
+import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,6 +37,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,6 +73,7 @@ import com.example.R
 import com.example.data.model.ChatMessageEntity
 import com.example.data.model.MessageSender
 import com.example.ui.BasokaViewModel
+import com.example.ui.components.DocumentExporter
 import com.example.ui.components.ThinkingIndicator
 import com.example.ui.theme.BasokaBlack
 import com.example.ui.theme.BasokaChatBotBubble
@@ -90,7 +98,9 @@ fun ChatScreen(
     val inputText by viewModel.inputText.collectAsState()
     val isThinking by viewModel.isThinking.collectAsState()
     val thinkingStatusText by viewModel.thinkingStatusText.collectAsState()
+    val isSpeaking by viewModel.isSpeaking.collectAsState()
     val listState = rememberLazyListState()
+    val context = LocalContext.current
 
     var showVoiceModal by remember { mutableStateOf(false) }
     var attachedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -140,7 +150,18 @@ fun ChatScreen(
                     items(messages, key = { it.id }) { message ->
                         ChatMessageItem(
                             message = message,
-                            onActionClick = onNavigateToTasks
+                            onActionClick = onNavigateToTasks,
+                            onSpeak = { text ->
+                                if (isSpeaking) {
+                                    viewModel.stopSpeaking()
+                                } else {
+                                    viewModel.speakText(text)
+                                }
+                            },
+                            isSpeaking = isSpeaking,
+                            onShare = { text ->
+                                DocumentExporter.shareAsText(context, "پەیامی BASOKA AI", text)
+                            }
                         )
                     }
 
@@ -347,7 +368,10 @@ private fun EmptyStateGreeting(
 @Composable
 fun ChatMessageItem(
     message: ChatMessageEntity,
-    onActionClick: () -> Unit
+    onActionClick: () -> Unit,
+    onSpeak: (String) -> Unit = {},
+    isSpeaking: Boolean = false,
+    onShare: (String) -> Unit = {}
 ) {
     val isUser = message.sender == MessageSender.USER
     var showFullImage by remember { mutableStateOf(false) }
@@ -462,6 +486,39 @@ fun ChatMessageItem(
                         color = BasokaTextPrimary,
                         lineHeight = 22.sp
                     )
+
+                    // Audio reading & share controls for AI response
+                    if (!isUser) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            IconButton(
+                                onClick = { onSpeak(message.text) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isSpeaking) Icons.Default.Stop else Icons.Default.VolumeUp,
+                                    contentDescription = "خوێندنەوە بە دەنگ",
+                                    tint = if (isSpeaking) BasokaPrimary else BasokaTextTertiary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = { onShare(message.text) },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "هاوبەشکردن",
+                                    tint = BasokaTextTertiary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
 
                     if (message.structuredAction != null) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -610,6 +667,17 @@ fun VoiceInputDialog(
     onDismiss: () -> Unit,
     onSpeechResult: (String) -> Unit
 ) {
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                onSpeechResult(spokenText)
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = BasokaSurface,
@@ -618,22 +686,34 @@ fun VoiceInputDialog(
         icon = {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(64.dp)
                     .clip(CircleShape)
-                    .background(BasokaPrimary.copy(alpha = 0.15f)),
+                    .background(BasokaPrimary.copy(alpha = 0.2f))
+                    .clickable {
+                        try {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ku")
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "قسە بکە، BASOKA گوێت لێ دەگرێت...")
+                            }
+                            speechLauncher.launch(intent)
+                        } catch (e: Exception) {
+                            // Fallback if device lacks speech recognition package
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = null,
+                    contentDescription = "قسەکردن بە دەنگ",
                     tint = BasokaPrimary,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(34.dp)
                 )
             }
         },
         title = {
             Text(
-                text = "دۆخی گفتوگۆی دەنگی",
+                text = "دۆخی دەنگیی ڕاستەوخۆ",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,
@@ -643,16 +723,16 @@ fun VoiceInputDialog(
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "دەنگەکەت دەگۆڕدرێت بۆ دەق و AI بە نووسین وەڵامت دەداتەوە.\n(دەنگی خۆکارانە کوژاوەیە بۆ پاراستنی هێمنی و ئارامی).",
+                    text = "کلیک لە مایکەکە بکە بۆ قسەکردن، یان یەکێک لە ڕستە خێراکان هەڵبژێرە:",
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
                     lineHeight = 20.sp
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Quick sample voice transcription options in Kurdish
                 Text(
-                    text = "نموونەی گوتراو:",
+                    text = "فەرمانە دەنگییە ئامادەکراوەکان:",
                     fontSize = 12.sp,
                     color = BasokaPrimary,
                     fontWeight = FontWeight.SemiBold
@@ -660,8 +740,9 @@ fun VoiceInputDialog(
                 Spacer(modifier = Modifier.height(6.dp))
                 val samples = listOf(
                     "سبەی کاتژمێر ٨ بیرم بخەرەوە",
-                    "تایمەری دە خولەکی دابنێ",
-                    "پلانی ئەمڕۆم بۆ ڕێکبخە"
+                    "تایمەری پێنج خولەکی دابنێ",
+                    "پلانی ئەمڕۆم بۆ ڕێکبخە",
+                    "ئەم دەقەم بۆ وەرگێڕە بۆ بادینی"
                 )
                 samples.forEach { sample ->
                     Surface(
@@ -673,7 +754,7 @@ fun VoiceInputDialog(
                         color = BasokaSurfaceElevated
                     ) {
                         Text(
-                            text = "«$sample»",
+                            text = "🎙️ «$sample»",
                             fontSize = 12.sp,
                             color = BasokaTextPrimary,
                             modifier = Modifier.padding(8.dp),
