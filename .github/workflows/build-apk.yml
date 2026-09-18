@@ -24,7 +24,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -32,9 +31,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.10.2'
+          gradle-version: '9.3.1'
 
-      - name: Prepare Secrets and Environment
+      - name: Prepare Secrets and Signing Keys
         run: |
           if [ ! -f .env ]; then
             cp .env.example .env
@@ -44,7 +43,7 @@ jobs:
           fi
 
       - name: Build Debug APK
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
@@ -60,7 +59,7 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: "BASOKA Android App v1.0.${{ github.run_number }}"
           body: |
-            ## BASOKA - AI Assistant (کوردستان) 🚀
+            ## BASOKA - Kurdish AI Assistant 🚀
             وەشانی فەرمیی ئەپڵیکەیشنی BASOKA بە فۆرماتی APK بۆ مۆبایلەکانی ئەندرۆید.
 
             ### فایلی دابەزاندن:
