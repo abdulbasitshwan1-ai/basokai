@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build & Package APK
+    name: Build & Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,7 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Prepare Secrets and Signing Keys
+      - name: Prepare Secrets and Keys
         run: |
           if [ ! -f .env ]; then
             cp .env.example .env
@@ -43,7 +43,8 @@ jobs:
           fi
 
       - name: Build Debug APK
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+        run: |
+          gradle :app:assembleDebug --no-daemon --no-configuration-cache --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
@@ -58,12 +59,9 @@ jobs:
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: "BASOKA Android App v1.0.${{ github.run_number }}"
-          body: |
-            ## BASOKA - Kurdish AI Assistant 🚀
-            وەشانی فەرمیی ئەپڵیکەیشنی BASOKA بە فۆرماتی APK بۆ مۆبایلەکانی ئەندرۆید.
-
-            ### فایلی دابەزاندن:
-            دەتوانیت لە خوارەوە لە بەشی **Assets** فایلی `app-debug.apk` ڕاستەوخۆ دابەزێنیتە ناو مۆبایلەکەت و دایمەزرێنیت.
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           files: app/build/outputs/apk/debug/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
